@@ -5,7 +5,7 @@ const PUBLIC_PATHS = ['/login', '/api/auth']
 const IAM = process.env.IAM_BASE_URL
 const APP_CODE = process.env.IAM_APP_CODE
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
