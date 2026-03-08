@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, ShieldCheck, AppWindow,
@@ -30,6 +31,11 @@ interface SidebarProps {
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
+  const [versionId, setVersionId] = useState('© 2026 MACCOM LABS · Admin Portal v1.0')
+
+  useEffect(() => {
+    fetch('/api/version').then(r => r.json()).then(d => setVersionId(d.version)).catch(() => {})
+  }, [])
 
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0 shadow-sm">
@@ -40,7 +46,7 @@ export default function Sidebar({ user }: SidebarProps) {
         </div>
         <div>
           <div className="font-bold text-sm text-foreground leading-tight">Admin Portal</div>
-          <div className="text-[10px] text-muted-foreground font-mono tracking-wide">v1.0 · DWIREGIONAL</div>
+          <div className="text-[10px] text-muted-foreground font-mono tracking-wide">{versionId}</div>
         </div>
       </div>
 
