@@ -19,20 +19,41 @@ export interface Role {
   id: string; name: string; description: string; permissions: string[]
 }
 
-async function fetchIAM(path: string, options: RequestInit = {}, token?: string) {
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function fetchIAM(path: string, options: RequestInit = {}, token?: string, retries = 3) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
-  const res = await fetch(`${BASE}${path}`, { ...options, headers })
-  if (!res.ok) {
-    const error = await res.text()
-    throw new Error(error || `IAM API error: ${res.status}`)
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${BASE}${path}`, { ...options, headers })
+      if (!res.ok) {
+        // Retry on 503/502/504 (DB wake-up) or 500
+        if ([500, 502, 503, 504].includes(res.status) && attempt < retries) {
+          await sleep(attempt * 1000)
+          continue
+        }
+        const error = await res.text()
+        throw new Error(error || `IAM API error: ${res.status}`)
+      }
+      const json = await res.json()
+      if (json.success === false) throw new Error(json.message || 'IAM error')
+      return json.data ?? json
+    } catch (err: any) {
+      // Retry on network errors (connection refused, timeout)
+      if (attempt < retries && (err.cause?.code === 'ECONNREFUSED' || err.message?.includes('fetch failed'))) {
+        await sleep(attempt * 1000)
+        continue
+      }
+      throw err
+    }
   }
-  const json = await res.json()
-  if (json.success === false) throw new Error(json.message || 'IAM error')
-  return json.data ?? json
 }
 
 export const iamClient = {
