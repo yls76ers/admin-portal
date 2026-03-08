@@ -1,4 +1,5 @@
 'use client'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
@@ -44,8 +45,9 @@ export default function Topbar({ user }: TopbarProps) {
         <span className="ml-auto text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded">⌘K</span>
       </div>
 
+      <ThemeToggle />
       <Button variant="ghost" size="icon" className="relative text-gray-500 hover:text-foreground">
-        <Bell className="w-4 h-4" />
+          <Bell className="w-4 h-4" />
         <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
       </Button>
 
