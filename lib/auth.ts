@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
-import { iamClient, IamUser } from './iam-client'
+import { decodeJwt } from 'jose'
+import { IamUser } from './iam-client'
 
 export const AUTH_COOKIE = 'admin_token'
 export const REFRESH_COOKIE = 'admin_refresh'
@@ -15,8 +16,17 @@ export async function validateSession(): Promise<{ token: string; user: IamUser 
   const { token } = await getSession()
   if (!token) return null
   try {
-    const data = await iamClient.validate(token)
-    const user: IamUser = { id: data.userId, email: data.email, displayName: data.displayName, applicationCode: data.applicationCode, roles: data.roles, permissions: data.permissions }
+    const payload = decodeJwt(token)
+    const exp = payload.exp as number
+    if (exp && Date.now() / 1000 > exp) return null
+    const user: IamUser = {
+      id: payload.sub as string,
+      email: payload.email as string,
+      displayName: payload.name as string,
+      applicationCode: payload.app as string,
+      roles: [payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] as string],
+      permissions: (payload.permission as string[]) ?? [],
+    }
     return { token, user }
   } catch {
     return null
